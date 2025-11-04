@@ -1,0 +1,25 @@
+import mongoose from 'mongoose';
+
+const userSchema = new mongoose.Schema(
+  {
+    username: {
+      type: String,
+      required: [true, 'Please provide a username'],
+      unique: true, // No two users can have the same username
+      lowercase: true, // Store usernames as lowercase to avoid confusion
+      trim: true, // Remove any extra spaces from the start or end
+    },
+    password: {
+      type: String,
+      required: [true, 'Please provide a password'],
+      minlength: 6,
+    },
+  },
+  {
+    timestamps: true,
+  }
+);
+
+const User = mongoose.model('User', userSchema);
+
+export default User;
