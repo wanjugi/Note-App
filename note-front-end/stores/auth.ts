@@ -1,74 +1,126 @@
-// store/auth.ts
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
+import type { User } from '~/types'
 
-// We can define a simple User type right here
-// Later, this will match our backend's User model
-interface User {
-  id: string
-  username: string
-  role: 'admin' | 'moderator' | 'user'
+// 1. DEFINE OUR DATA TYPES
+
+// This interface MUST match the successful login response from our backend.
+interface LoginResponse {
+  token: string
+  user: User
 }
 
 export const useAuthStore = defineStore('auth', () => {
-  // 1. STATE
-  const user = ref<User | null>(null)
+  // 2. STATE 
+  // We'll initialize the state directly from localStorage.
+ // 2. --- STATE ---
+  // We will ALWAYS initialize as null.
+  // This ensures the server and client render the same initial page.
   const token = ref<string | null>(null)
+  const user = ref<User | null>(null)
 
-  // 2. GETTERS
-  // An 'isAuthenticated' getter that other parts of the app can check
+  // 3. GETTERS 
   const isAuthenticated = computed(() => !!user.value && !!token.value)
 
-  // 3. ACTIONS
+  // Helper to get the API URL from nuxt.config.ts
+  const config = useRuntimeConfig();
+  const apiBaseUrl = config.public.apiBaseUrl;
+
+  // 4. --- ACTIONS ---
+
+  // This action will be called ONCE when the app mounts.
+  function initAuth() {
+    // This check is still good, just in case
+    if (import.meta.client) { 
+      const storedToken = localStorage.getItem('authToken')
+      const storedUser = localStorage.getItem('authUser')
+
+      if (storedToken && storedUser) {
+        token.value = storedToken
+        user.value = JSON.parse(storedUser)
+      }
+    }
+  }
 
   /**
-   * MOCK Login Action.
-   * In a real app, this would call our Express API.
+   * Login Action.
+   * This calls our Express API.
    */
   async function login(credentials: { username: string, password: string }) {
-    // --- MOCK API CALL (simulating a 0.5s delay) ---
-    await new Promise(resolve => setTimeout(resolve, 500))
+    try {
+      // 1. Call the REAL API using Nuxt's $fetch
+      const response = await $fetch<LoginResponse>(
+        `${apiBaseUrl}/auth/login`,
+        {
+          method: 'POST',
+          body: credentials
+        }
+      )
 
-    // --- MOCK SUCCESSFUL RESPONSE ---
-    // In a real app, the token and user data would come from the server
-    token.value = 'mock-jwt-token-12345'
-    user.value = {
-      id: 'u1',
-      username: credentials.username,
-      role: 'user' // Default to 'user' for this mock
+      // 2. Update the state in Pinia
+      token.value = response.token
+      user.value = response.user
+
+      // 3. Save to localStorage for persistence
+      localStorage.setItem('authToken', response.token)
+      localStorage.setItem('authUser', JSON.stringify(response.user))
+
+    } catch (error) {
+      console.error('Login failed:', error)
+      // Clear any bad/old state if login fails
+      logout()
+      // Re-throw the error so the login.vue page can catch it
+      throw error
     }
   }
 
   /**
-   * MOCK Signup Action.
+   * Signup Action.
    */
   async function signup(credentials: { username: string, password: string }) {
-    // --- MOCK API CALL ---
-    await new Promise(resolve => setTimeout(resolve, 500))
+    try {
+      // 1. Call the signup API
+      await $fetch(
+        `${apiBaseUrl}/auth/signup`,
+        {
+          method: 'POST',
+          body: credentials
+        }
+      )
 
-    // MOCK SUCCESSFUL RESPONSE 
-    token.value = 'mock-jwt-token-67890'
-    user.value = {
-      id: 'u2',
-      username: credentials.username,
-      role: 'user'
+      // 2. --- GOOD UX ---
+      // After a successful signup, let's log the user in immediately.
+      // This will run the 'login' function above.
+      await login(credentials)
+
+    } catch (error) {
+      console.error('Signup failed:', error)
+      logout() // Clear any state
+      throw error // Re-throw for the form
     }
   }
-  
-  // Logout
 
+  /**
+   * Logout Action
+   */
   function logout() {
+    // 1. Clear the state in Pinia
     user.value = null
     token.value = null
+
+    // 2. Clear from localStorage
+    localStorage.removeItem('authToken')
+    localStorage.removeItem('authUser')
   }
 
-  // 4. RETURN
+  // 5. --- RETURN ---
   return {
     user,
     token,
     isAuthenticated,
     login,
     signup,
-    logout
+    logout,
+    initAuth
   }
 })

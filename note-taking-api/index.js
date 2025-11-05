@@ -5,6 +5,7 @@ import cors from 'cors';
 import authRoutes from './routes/authRoutes.js';
 import noteRoutes from './routes/noteRoutes.js';
 import folderRoutes from './routes/folderRoutes.js';
+import userRoutes from './routes/userRoutes.js';
 
 // Load environment variables from .env file
 dotenv.config(); 
@@ -24,6 +25,8 @@ app.use(express.json());
 app.use('/api/auth', authRoutes);
 app.use('/api/notes', noteRoutes);
 app.use('/api/folders', folderRoutes);
+app.use('/api/users', userRoutes);
+
 
 // Environment Variables
 // Get our secret variables from the .env file

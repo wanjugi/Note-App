@@ -1,13 +1,28 @@
-// This interface defines the shape of a Note
+// This interface defines the shape of a Folder (This is correct)
+export interface Folder {
+  _id: string
+  name: string
+  user: string
+  createdAt: string
+  updatedAt: string
+}
+
+// This interface defines the shape of a User FROM OUR API
+export interface User {
+  _id: string       
+  username: string
+  role: 'user' | 'moderator' | 'admin' 
+}
+
+// --- UPDATE THIS INTERFACE ---
+// This interface defines the shape of a Note FROM OUR API
 export interface Note {
-  id: string
+  _id: string       
   title: string
   content: string
+  author: string    
+  folder: string | null 
+  assignee: string | null
   createdAt: string
-  folderId: string | null // null means it's in "Inbox"
-}
-// This interface defines the shape of a Folder
-export interface Folder {
-  id: string
-  name: string
+  updatedAt: string
 }

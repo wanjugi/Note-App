@@ -1,12 +1,8 @@
 <template>
     <UAuthForm :fields="fields" :schema="schema" title="Create an account" icon="i-lucide-user-plus" @submit="onSubmit"
-        color="neutral">
+        color="neutral" :loading="loading">
         <template #description>
             Already have an account? <ULink to="/login" class="text-primary font-medium">Sign in</ULink>.
-        </template>
-
-        <template #password-hint>
-            <ULink to="/" class="text-primary font-medium" tabindex="-1">Forgot password?</ULink>
         </template>
 
         <template #footer>
@@ -31,8 +27,9 @@ definePageMeta({
 const authStore = useAuthStore()
 const router = useRouter()
 const loading = ref(false)
+const toast = useToast() // 
 
-// Schema
+// Schema 
 const schema = z.object({
     username: z.string().min(3, 'Username must be at least 3 characters'),
     password: z.string().min(8, 'Must be at least 8 characters'),
@@ -44,7 +41,6 @@ const schema = z.object({
 
 type Schema = z.output<typeof schema>
 
-// 3. Fields 
 const fields = [
     { name: 'username', type: 'text' as const, label: 'Username', placeholder: 'Enter your username' },
     { name: 'password', type: 'password' as const, label: 'Password', placeholder: 'Enter your password' },
@@ -64,9 +60,20 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
 
         // Redirect to homepage on success
         router.push('/')
-    } catch (error) {
+
+    } catch (error: any) { 
         console.error('Signup failed:', error)
-        // TODO: Show an error toast
+
+        // Show an error toast
+        toast.add({
+            title: 'Signup Failed',
+            // This will show our backend error, e.g., "Username already exists."
+            description: error.data?.message || 'An unexpected error occurred.',
+            icon: 'i-heroicons-exclamation-circle',
+            color: 'error',
+            duration: 5000
+        })
+
     } finally {
         loading.value = false // Stop loading
     }

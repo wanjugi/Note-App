@@ -1,13 +1,13 @@
 import Folder from '../models/Folder.js';
 import Note from '../models/Note.js';
 
-// Create a Folder
+// --- Create a Folder (No change needed) ---
 export const createFolder = async (req, res) => {
   try {
     const { name } = req.body;
     const newFolder = new Folder({
       name,
-      user: req.user.id,
+      user: req.user.id, // 'user' here is correct, it's the owner
     });
     const savedFolder = await newFolder.save();
     res.status(201).json(savedFolder);
@@ -16,7 +16,8 @@ export const createFolder = async (req, res) => {
   }
 };
 
-// Get All My Folders
+// --- Get All My Folders (No change needed) ---
+// This is specific to the user, so no role logic is needed.
 export const getAllMyFolders = async (req, res) => {
   try {
     const folders = await Folder.find({ user: req.user.id });
@@ -26,7 +27,7 @@ export const getAllMyFolders = async (req, res) => {
   }
 };
 
-// Update a Folder
+// --- Update a Folder (UPDATED WITH ROLE LOGIC) ---
 export const updateFolder = async (req, res) => {
   try {
     const { name } = req.body;
@@ -36,10 +37,15 @@ export const updateFolder = async (req, res) => {
     if (!folder) {
       return res.status(404).json({ message: 'Folder not found' });
     }
-    // Check ownership
-    if (folder.user.toString() !== req.user.id) {
-      return res.status(401).json({ message: 'User not authorized' });
+
+    // --- PERMISSION CHECK UPDATED ---
+    // Block the request IF:
+    // 1. You are NOT the owner
+    // 2. AND you are ONLY a 'user'
+    if (folder.user.toString() !== req.user.id && req.user.role === 'user') {
+      return res.status(401).json({ message: 'User not authorized to update folder' });
     }
+    // (If you are the owner, you pass. If you are 'moderator' or 'admin', you pass)
 
     const updatedFolder = await Folder.findByIdAndUpdate(
       folderId,
@@ -52,7 +58,7 @@ export const updateFolder = async (req, res) => {
   }
 };
 
-//  Delete a Folder 
+// --- Delete a Folder (UPDATED WITH ROLE LOGIC) ---
 export const deleteFolder = async (req, res) => {
   try {
     const folderId = req.params.id;
@@ -61,17 +67,22 @@ export const deleteFolder = async (req, res) => {
     if (!folder) {
       return res.status(404).json({ message: 'Folder not found' });
     }
-    // Check ownership
-    if (folder.user.toString() !== req.user.id) {
-      return res.status(401).json({ message: 'User not authorized' });
+
+    // --- PERMISSION CHECK UPDATED ---
+    // Block the request IF:
+    // 1. You are NOT the owner
+    // 2. AND you are ONLY a 'user'
+    if (folder.user.toString() !== req.user.id && req.user.role === 'user') {
+      return res.status(401).json({ message: 'User not authorized to delete folder' });
     }
+    // (If you are the owner, you pass. If you are 'moderator' or 'admin', you pass)
 
     // 1. Delete the folder itself
     await Folder.findByIdAndDelete(folderId);
 
     // 2. IMPORTANT: Un-assign notes from this folder
     // Find all notes that belonged to this folder and set their 'folder' field to null
-    
+
     await Note.updateMany(
       { folder: folderId },
       { $set: { folder: null } }

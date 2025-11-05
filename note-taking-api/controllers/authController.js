@@ -75,8 +75,9 @@ export const login = async (req, res) => {
           message: 'Login successful!',
           token: token, // This is the "ID card" for the frontend
           user: {
-            id: user._id,
+            _id: user._id,
             username: user.username,
+            role: user.role
           }
         });
       }

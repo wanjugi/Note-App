@@ -14,6 +14,11 @@ const userSchema = new mongoose.Schema(
       required: [true, 'Please provide a password'],
       minlength: 6,
     },
+    role: {
+      type: String,
+      enum: ['user', 'moderator', 'admin'], // The only possible values
+      default: 'user' // All new signups will be a 'user'
+    }
   },
   {
     timestamps: true,
