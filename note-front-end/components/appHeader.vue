@@ -27,10 +27,12 @@
 
 <script setup lang="ts">
 import { useAuthStore } from '~/stores/auth'
+// --- 1. ADD THIS IMPORT ---
+import { useRouter } from 'vue-router'
 
 // INITIALIZE store and router
 const authStore = useAuthStore()
-const router = useRouter()
+const router = useRouter() // This will now work correctly
 
 // models
 const isSidebarOpen = defineModel<boolean>('isSidebarOpen')
@@ -38,9 +40,9 @@ const isDark = defineModel<boolean>('isDark')
 
 // Logout handler
 function handleLogout() {
-  authStore.logout()
-  
-  // Redirect to the new landing page (/) instead of /login
-  router.push('/')
+    authStore.logout()
+
+    // This will now redirect to your landing page
+    router.push('/')
 }
 </script>

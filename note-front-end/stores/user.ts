@@ -45,10 +45,9 @@ export const useUserStore = defineStore('users', () => {
    */
   async function fetchAdminUserList() {
     if (!authStore.token || authStore.user?.role !== 'admin') return
-    if (adminUserList.value.length > 0) return
     try {
       const response = await $fetch<User[]>(
-        `${apiBaseUrl}/users/admin`, 
+        `${apiBaseUrl}/users/admin`,
         { headers: getHeaders() }
       )
       adminUserList.value = response
@@ -64,7 +63,7 @@ export const useUserStore = defineStore('users', () => {
     if (!authStore.token || authStore.user?.role !== 'admin') return
     try {
       const updatedUser = await $fetch<User>(
-        `${apiBaseUrl}/users/admin/${userId}/role`, 
+        `${apiBaseUrl}/users/admin/${userId}/role`,
         {
           method: 'PUT',
           headers: getHeaders(),
@@ -79,15 +78,47 @@ export const useUserStore = defineStore('users', () => {
       console.error('Failed to update user role:', error)
     }
   }
-  
+
+  /**
+   * [ADMIN] Deletes a user.
+   * Calls DELETE /api/users/admin/:id
+   */
+  async function deleteUser(userId: string) {
+    // Only admins can run this
+    if (!authStore.token || authStore.user?.role !== 'admin') {
+      return
+    }
+
+    try {
+      // 1. Call the new "DELETE" endpoint
+      await $fetch(
+        `${apiBaseUrl}/users/admin/${userId}`,
+        {
+          method: 'DELETE',
+          headers: getHeaders()
+        }
+      )
+
+      // 2. On success, remove the user from the local admin list
+      // This will make the UI update instantly
+      adminUserList.value = adminUserList.value.filter(u => u._id !== userId)
+
+    } catch (error) {
+      console.error('Failed to delete user:', error)
+      // We'll show a toast from the page
+      throw error // Re-throw the error so the page can catch it
+    }
+  }
+
   // 5. RETURN
-  return { 
+  return {
     userList,
     adminUserList,
-    allUsersForDropdown, // <-- The new getter
+    allUsersForDropdown,
     allUsersForAdmin,
-    fetchUserList,       // <-- The new function
+    fetchUserList,       
     fetchAdminUserList,
-    updateUserRole
+    updateUserRole,
+    deleteUser
   }
 })

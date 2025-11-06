@@ -5,6 +5,7 @@
         <div v-if="userStore.allUsersForAdmin.length > 0" class="flex flex-col gap-4">
             <UCard v-for="user in userStore.allUsersForAdmin" :key="user._id">
                 <div class="flex items-center justify-between">
+
                     <div class="flex items-center gap-3">
                         <UAvatar :alt="user.username.charAt(0).toUpperCase()" size="md" />
                         <div>
@@ -13,14 +14,22 @@
                         </div>
                     </div>
 
-                    <div class="w-48">
-                        <select :value="user.role" :disabled="user._id === authStore.user?._id"
-                            @change="handleRoleChange(user._id, ($event.target as HTMLSelectElement).value)"
-                            class="block w-full rounded-md border-0 py-1.5 pl-3 pr-10 text-gray-900 dark:text-white bg-white dark:bg-gray-800 ring-1 ring-inset ring-gray-300 dark:ring-gray-700 focus:ring-2 focus:ring-primary-500 sm:text-sm sm:leading-6">
-                            <option v-for="role in roleOptions" :key="role" :value="role">
-                                {{ role.charAt(0).toUpperCase() + role.slice(1) }}
-                            </option>
-                        </select>
+                    <div class="flex items-center gap-2">
+
+                        <div class="w-48">
+                            <select :value="user.role" :disabled="user._id === authStore.user?._id"
+                                @change="handleRoleChange(user._id, ($event.target as HTMLSelectElement).value)"
+                                class="block w-full rounded-md border-0 py-1.5 pl-3 pr-10 text-gray-900 dark:text-white bg-white dark:bg-gray-800 ring-1 ring-inset ring-gray-300 dark:ring-gray-700 focus:ring-2 focus:ring-primary-500 sm:text-sm sm:leading-6">
+                                <option v-for="role in roleOptions" :key="role" :value="role">
+                                    {{ role.charAt(0).toUpperCase() + role.slice(1) }}
+                                </option>
+                            </select>
+                        </div>
+
+                        <UButton icon="i-heroicons-trash-20-solid" color="error" variant="ghost"
+                            :disabled="user._id === authStore.user?._id"
+                            @click="handleDeleteUser(user._id, user.username)" />
+
                     </div>
                 </div>
             </UCard>
@@ -41,7 +50,7 @@ import { useAuthStore } from '~/stores/auth'
 // before rendering this page.
 definePageMeta({
     middleware: ['auth', 'admin']
-})
+});
 
 // 2. Initialize stores
 const userStore = useUserStore()
@@ -70,6 +79,37 @@ async function handleRoleChange(userId: string, newRole: string) {
         // If they click "Cancel", we need to refresh the list
         // to reset the dropdown to its original value (this is a small UX fix)
         await userStore.fetchAdminUserList()
+    }
+}
+
+/**
+ * Deletes a user after confirmation.
+ */
+async function handleDeleteUser(userId: string, username: string) {
+    // 1. Show a very clear confirmation dialog
+    if (!confirm(`Are you sure you want to PERMANENTLY delete "${username}"?\n\nThis will also delete all their notes and folders. This action cannot be undone.`)) {
+        return
+    }
+
+    try {
+        // 2. Call the store action
+        await userStore.deleteUser(userId)
+
+        // 3. Show success toast
+        toast.add({
+            title: 'User Deleted',
+            description: `User "${username}" and all their data have been deleted.`,
+            color: 'success'
+        })
+
+    } catch (error: any) {
+        // 4. Show error toast (e.g., "Admin cannot delete themselves")
+        console.error('Failed to delete user:', error)
+        toast.add({
+            title: 'Delete Failed',
+            description: error.data?.message || 'An error occurred.',
+            color: 'error'
+        })
     }
 }
 </script>

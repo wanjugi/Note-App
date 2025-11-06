@@ -1,4 +1,6 @@
 import User from '../models/User.js'; // Import the User model
+import Note from '../models/Note.js';     // <-- ADD THIS
+import Folder from '../models/Folder.js';
 
 /**
  * [PUBLIC] Gets a simple list of all users (id, username).
@@ -63,3 +65,38 @@ export const updateUserRole = async (req, res) => {
     res.status(500).json({ message: 'Server error updating user role', error: error.message });
   }
 };
+
+/**
+ * [ADMIN ONLY] Deletes a user and all their associated notes/folders.
+ */
+export const deleteUser = async (req, res) => {
+  try {
+    const userId = req.params.id;
+
+    // 1. Find the user to be deleted
+    const userToDelete = await User.findById(userId);
+    if (!userToDelete) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    // 2. SAFETY CHECK: Prevent an admin from deleting themselves
+    if (userToDelete._id.toString() === req.user.id) {
+      return res.status(400).json({ message: 'Admin cannot delete their own account' });
+    }
+
+    // 3. Delete all notes and folders owned by this user
+    // We use 'author' for notes and 'user' for folders
+    
+    await Note.deleteMany({ author: userId });
+    await Folder.deleteMany({ user: userId });
+
+    // 4. Finally, delete the user themselves
+    await User.findByIdAndDelete(userId);
+
+    res.status(200).json({ message: 'User and all associated data deleted successfully' });
+
+  } catch (error) {
+    res.status(500).json({ message: 'Server error deleting user', error: error.message });
+  }
+};
+

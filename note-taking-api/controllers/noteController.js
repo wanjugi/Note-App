@@ -151,7 +151,7 @@ export const getNoteById = async (req, res) => {
 export const getAssignedNotes = async (req, res) => {
   // This logic is correct, it's specific to the logged-in user.
   try {
-    const notes = await Note.find({ assignee: req.user.id });
+    const notes = await Note.find({ assignee: req.user.id }).populate('author', 'username _id');
     res.status(200).json(notes);
   } catch (error) {
     res.status(500).json({ message: 'Server error fetching assigned notes' });

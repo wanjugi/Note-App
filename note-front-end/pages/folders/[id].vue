@@ -7,7 +7,8 @@
 
     <div v-if="folderNotes.length > 0" class="space-y-4">
       <NuxtLink v-for="note in folderNotes" :key="note._id" :to="`/notes/${note._id}`" class="block">
-        <UCard class="hover:border-primary-500 dark:hover:border-primary-400 transition-colors">
+        <UCard
+          class="border border-transparent hover:border-primary-300 dark:hover:border-primary-400 transition-colors">
           <template #header>
             <h2 class="font-semibold text-lg">{{ note.title }}</h2>
           </template>

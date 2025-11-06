@@ -9,7 +9,6 @@
             active-class="text-neutral-900 dark:text-neutral-100 font-semibold"
             inactive-class="text-gray-500 hover:text-neutral-900 dark:text-gray-400 dark:hover:text-neutral-100">
             <UIcon name="i-heroicons-pencil-square-solid" class="w-10 h-10" />
-
             <span v-if="isSidebarOpen" class="text-3xl font-bold">
               NoteApp
             </span>
@@ -54,7 +53,7 @@
               <UButton v-if="isSidebarOpen" icon="i-heroicons-trash-20-solid" color="error" variant="ghost" size="xs"
                 class="opacity-0 group-hover:opacity-100" @click="handleDeleteFolder(folder._id, folder.name)" />
             </div>
-            <!-- === NEW ADMIN-ONLY LINK === -->
+
             <ULink v-if="authStore.user && authStore.user.role === 'admin'" to="/admin"
               active-class="bg-gray-100 dark:bg-gray-800" class="flex items-center p-3 text-base rounded-md">
               <UIcon name="i-heroicons-shield-check" class="w-5 h-5 mr-2" />
@@ -63,12 +62,14 @@
           </div>
         </div>
 
-        <AppFooter class="mt-4" />
-
+        <AppFooter v-if="isSidebarOpen" class="mt-4" />
       </div>
     </aside>
 
-    <main class="flex-1 overflow-y-auto">
+    <main class="flex-1 overflow-y-auto relative">
+
+      <HeroBackground />
+
       <AppHeader v-model:isSidebarOpen="isSidebarOpen" v-model:isDark="isDark" />
 
       <section class="p-6">
@@ -86,6 +87,7 @@ import { useRouter, useRoute } from 'vue-router'
 import { useFoldersStore } from '~/stores/folders'
 import { useAuthStore } from '~/stores/auth'
 import FolderModalClient from '~/components/FolderModal.client.vue'
+import HeroBackground from '~/components/heroBackground.vue'
 
 definePageMeta({
   middleware: 'auth'

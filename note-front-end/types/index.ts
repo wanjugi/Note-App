@@ -20,7 +20,7 @@ export interface Note {
   _id: string       
   title: string
   content: string
-  author: string    
+  author: string | User   
   folder: string | null 
   assignee: string | null
   createdAt: string

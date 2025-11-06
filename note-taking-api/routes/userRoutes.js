@@ -5,7 +5,8 @@ import express from 'express';
 import { 
   getUsersList, 
   getAdminUserList, 
-  updateUserRole 
+  updateUserRole,
+  deleteUser
 } from '../controllers/userController.js';
 
 // 2. Import our middleware
@@ -30,6 +31,6 @@ router.get('/admin', protect, isAdmin, getAdminUserList);
 // Accessible by *admins only*
 router.put('/admin/:id/role', protect, isAdmin, updateUserRole);
 
-// We can add a DELETE user route here later
-
+// DELETE user route
+router.delete('/admin/:id', protect, isAdmin, deleteUser);
 export default router;

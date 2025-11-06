@@ -6,12 +6,10 @@
 
         <div v-if="assignedNotes.length > 0" class="space-y-4">
 
-            <div v-for="note in assignedNotes" :key="note._id" class="block">
-                <UCard>
+            <NuxtLink v-for="note in assignedNotes" :key="note._id" :to="`/notes/${note._id}`" class="block">
+                <UCard class="border border-transparent hover:border-primary-300 dark:hover:border-primary-400 transition-colors">
                     <template #header>
-                        <NuxtLink :to="`/notes/${note._id}`">
-                            <h2 class="font-semibold text-lg hover:text-primary-500">{{ note.title }}</h2>
-                        </NuxtLink>
+                        <h2 class="font-semibold text-lg">{{ note.title }}</h2>
                     </template>
 
                     <p class="text-gray-700 dark:text-gray-300 truncate">
@@ -21,16 +19,20 @@
                     <template #footer>
                         <div class="flex justify-between items-center">
                             <span class="text-sm text-gray-500">
-                                Created: {{ new Date(note.createdAt).toLocaleString('en-US', {
-                                    dateStyle: 'short',
-                                timeStyle: 'short' }) }}
+                                <template v-if="typeof note.author === 'object' && note.author !== null">
+                                    From: <strong>{{ note.author.username }}</strong>
+                                </template>
+                                <template v-else>
+                                    Created: {{ new Date(note.createdAt).toLocaleDateString() }}
+                                </template>
                             </span>
 
-                            <UButton label="Delete" color="error" variant="soft" @click="handleDelete(note._id)" />
+                            <UButton label="Delete" color="error" variant="soft"
+                                @click.prevent="handleDelete(note._id)" />
                         </div>
                     </template>
                 </UCard>
-            </div>
+            </NuxtLink>
         </div>
 
         <div v-else>
