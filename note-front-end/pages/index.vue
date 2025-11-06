@@ -1,75 +1,43 @@
 <template>
-  <div>
-    <div class="flex justify-between items-center mb-6">
-      <h1 class="text-3xl font-bold">Personal</h1>
+  <div class="relative">
 
-      <NoteModalClient :folder-id="null" />
+    <div 
+      class="absolute inset-x-0 top-0 -z-10 h-[600px] bg-[radial-gradient(ellipse_at_top,var(--tw-gradient-stops))] from-primary-500/30 to-transparent blur-3xl" 
+      aria-hidden="true" 
+    ></div>
+
+    <UPageHero
+      description="The last note-taking app you'll ever need. Organize your thoughts, folders, and tasks. Assign notes to your team and get more done, together."
+      :links="heroLinks"
+      :ui="{
+        container: 'md:pt-18 lg:pt-20',
+        title: 'max-w-3xl mx-auto'
+      }"
+    >
+      <template #title>
+        Capture Your Ideas, <br>
+        <span class="text-primary-500">Share Your Vision.</span>
+      </template>
+    </UPageHero>
+
     </div>
-
-    <div v-if="inboxNotes.length > 0" class="space-y-4">
-
-      <NuxtLink v-for="note in inboxNotes" :key="note._id" :to="`/notes/${note._id}`" class="block">
-        <UCard class="hover:border-primary-500 dark:hover:border-primary-400 transition-colors">
-          <template #header>
-            <h2 class="font-semibold text-lg">{{ note.title }}</h2>
-          </template>
-
-          <p class="text-gray-700 dark:text-gray-300 truncate">
-            {{ note.content }}
-          </p>
-
-          <template #footer>
-            <div class="flex justify-between items-center">
-              <span class="text-sm text-gray-500">
-                Created: {{ new Date(note.createdAt).toLocaleString('en-US', { dateStyle: 'short', timeStyle: 'short' })
-                }}
-              </span>
-              <UButton label="Delete" color="error" variant="soft" @click.prevent="handleDelete(note._id)" />
-            </div>
-          </template>
-        </UCard>
-      </NuxtLink>
-    </div>
-
-    <div v-else>
-      <p class="text-gray-500 dark:text-gray-400">
-        Your inbox is empty.
-      </p>
-    </div>
-
-  </div>
 </template>
 
 <script setup lang="ts">
-import { computed, watch } from 'vue'
-import { useNotesStore } from '~/stores/notes'
-import { useAuthStore } from '~/stores/auth'
-import NoteModalClient from '~/components/NoteModal.client.vue'
+// 1. Tell this page to use our new 'landing' layout
+definePageMeta({
+  layout: 'landing',
+  middleware: 'guest'
+})
 
-// Store Setup
-const notesStore = useNotesStore()
-const authStore = useAuthStore()
-
-// This computed prop points to the store's data
-const inboxNotes = computed(() => notesStore.currentNotes)
-
-// 5. This watch fetches data as soon as the user is logged in.
-watch(
-  () => authStore.isAuthenticated,
-  (isNowAuthenticated) => {
-    if (isNowAuthenticated) {
-      // Call the action to get 'Inbox' notes (where folder is null)
-      notesStore.fetchInboxNotes()
-    } else {
-      // If user logs out, clear the notes
-      notesStore.clearNotes()
-    }
-  },
-  { immediate: true } // This runs the check on page load
-)
-
-// Delete Handler 
-function handleDelete(id: string) {
-  notesStore.deleteNote(id)
-}
+// 2. This defines the static links for the <UPageHero>
+// (The "Sign in/up" buttons are in the header)
+const heroLinks = [
+  {
+    label: 'Get Started',
+    to: '/signup',
+    size: 'lg'as const,
+    icon: 'i-lucide-arrow-right'
+  }
+]
 </script>

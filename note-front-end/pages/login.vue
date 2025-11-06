@@ -21,7 +21,8 @@ import { useRouter } from 'vue-router'
 
 // 1. Tell Nuxt to use our new 'auth' layout
 definePageMeta({
-  layout: 'auth'
+  layout: 'auth',
+  middleware: 'guest'
 })
 
 // INITIALIZE store, router, and loading state 
@@ -53,7 +54,7 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
     await authStore.login(event.data)
 
     // Redirect to homepage on success
-    router.push('/')
+    router.push('/app')
 
   } catch (error: any) { // <-- 2. SET ERROR TYPE TO 'any'
     console.error('Login failed:', error);

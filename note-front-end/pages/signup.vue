@@ -20,7 +20,8 @@ import { useRouter } from 'vue-router'
 
 // Tell Nuxt to use our 'auth' layout
 definePageMeta({
-    layout: 'auth'
+    layout: 'auth',
+    middleware: 'guest'
 })
 
 // INITIALIZE store, router, and loading state
@@ -59,7 +60,7 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
         })
 
         // Redirect to homepage on success
-        router.push('/')
+        router.push('/app')
 
     } catch (error: any) { 
         console.error('Signup failed:', error)
