@@ -3,7 +3,7 @@
         <div class="flex justify-between items-center mb-6">
             <UButton label="Back" icon="i-heroicons-arrow-left" variant="ghost" @click="goBack" />
 
-            <div v-if="note" class="flex space-x-2">
+            <div v-if="note && canEdit" class="flex space-x-2">
                 <UButton v-if="!isEditing" label="Edit" icon="i-heroicons-pencil" @click="startEditing" />
                 <template v-else>
                     <UButton label="Cancel" color="secondary" variant="ghost" @click="cancelEditing" />
@@ -43,7 +43,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive } from 'vue' // 'computed' is not needed here
+import { ref, reactive, computed } from 'vue' // 'computed' is not needed here
 import { useRoute, useRouter } from 'vue-router'
 import { useNotesStore } from '~/stores/notes'
 import { useAuthStore } from '~/stores/auth' // <-- 1. Import Auth Store
@@ -92,7 +92,9 @@ async function saveNote() {
         content: editableNote.content,
         folderId: note.value.folder,
         // We must pass the assigneeId to match the store's action
-        assigneeId: note.value.assignee
+        assigneeId: typeof note.value.assignee === 'object' && note.value.assignee !== null
+          ? note.value.assignee._id  // If it's an object, get ._id
+          : note.value.assignee
     })
 
     // (Your sync and closing logic is perfect)
@@ -125,4 +127,11 @@ function goBack() {
         router.push('/assigned')
     }
 }
+
+const canEdit = computed(() => {
+  if (!note.value || !authStore.user) return false
+  // You can edit if you are the AUTHOR
+  return note.value.author === authStore.user._id
+  // (If you want admins to edit too in the UI, add: || authStore.user.role === 'admin')
+})
 </script>

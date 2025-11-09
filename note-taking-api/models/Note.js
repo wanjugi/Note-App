@@ -34,6 +34,15 @@ const noteSchema = new Schema(
       type: Schema.Types.ObjectId,
       ref: 'User',
       default: null // If null, it's just a personal note
+    },
+    // By default, both people can see the note.
+    visibleToAuthor: {
+      type: Boolean,
+      default: true
+    },
+    visibleToAssignee: {
+      type: Boolean,
+      default: true
     }
   },
   {

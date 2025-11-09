@@ -65,40 +65,41 @@ export const getNotesByFolder = async (req, res) => {
 };
 
 
-// --- Update a Note (UPDATED WITH ROLE LOGIC) ---
+// --- Update a Note (STRICTER PERMISSIONS) ---
 export const updateNote = async (req, res) => {
   try {
     const { title, content, folderId, assigneeId } = req.body;
     const noteId = req.params.id;
-    const note = await Note.findById(noteId);
 
+    const note = await Note.findById(noteId);
     if (!note) {
       return res.status(404).json({ message: 'Note not found' });
     }
 
-    // --- PERMISSION CHECK UPDATED ---
-    // Block the request IF:
-    // 1. You are NOT the author
-    // 2. AND you are ONLY a 'user'
+    // --- STRICTER PERMISSION CHECK ---
+    // Only the AUTHOR (or an admin/mod) can edit a note.
+    // The assignee CANNOT edit it.
+    const isAuthor = note.author.toString() === req.user.id;
+    const isAdmin = req.user.role === 'admin' || req.user.role === 'moderator';
 
-    if (note.author.toString() !== req.user.id && req.user.role === 'user') {
-      return res.status(401).json({ message: 'User not authorized to update' });
+    if (!isAuthor && !isAdmin) {
+      return res.status(403).json({ message: 'Only the author can edit this note.' });
     }
-    // (If you are the author, you pass. If you are 'moderator' or 'admin', you pass)
+    // --------------------------------
 
-    // 2. Update the note with the new data
     const updatedNote = await Note.findByIdAndUpdate(
       noteId,
       { $set: { title, content, folder: folderId || null, assignee: assigneeId || null } },
       { new: true }
     );
     res.status(200).json(updatedNote);
+
   } catch (error) {
     res.status(500).json({ message: 'Server error updating note', error: error.message });
   }
 };
 
-// --- Delete a Note (UPDATED WITH ROLE LOGIC) ---
+// --- Delete a Note (UNIFIED LOGIC) ---
 export const deleteNote = async (req, res) => {
   try {
     const noteId = req.params.id;
@@ -108,25 +109,49 @@ export const deleteNote = async (req, res) => {
       return res.status(404).json({ message: 'Note not found' });
     }
 
-    // --- THIS IS THE NEW PERMISSION CHECK ---
-    // Check if the user is the author
-    const isAuthor = note.author.toString() === req.user.id;
-    // Check if the user is the assignee (and if assignee exists)
-    const isAssignee = note.assignee && note.assignee.toString() === req.user.id;
-    // Check if the user is a mod/admin
-    const isModerator = req.user.role === 'moderator' || req.user.role === 'admin';
+    const userId = req.user.id;
+    // We use .toString() to ensure we are comparing strings
+    const isAuthor = note.author.toString() === userId;
+    const isAssignee = note.assignee && note.assignee.toString() === userId;
 
-    // Block the request IF:
-    // You are NOT the author, AND
-    // You are NOT the assignee, AND
-    // You are NOT a moderator/admin
-    if (!isAuthor && !isAssignee && !isModerator) {
-      return res.status(401).json({ message: 'User not authorized to delete' });
+    // CASE 1: It's a personal note (Hard Delete)
+    // If it wasn't sent to anyone, just delete it for real.
+    if (!note.assignee) {
+      if (!isAuthor) return res.status(401).json({ message: 'Not authorized' });
+      await Note.findByIdAndDelete(noteId);
+      return res.status(200).json({ message: 'Personal note deleted' });
     }
-    // (If you are the author, assignee, or a mod/admin, you pass)
 
-    await Note.findByIdAndDelete(noteId);
-    res.status(200).json({ message: 'Note deleted successfully' });
+    // CASE 2: It's a shared note (Soft Delete)
+    let wasHidden = false;
+
+    if (isAuthor) {
+      note.visibleToAuthor = false;
+      wasHidden = true;
+    }
+    // We use a separate 'if' so if you assigned it to yourself,
+    // it hides it from BOTH your lists instantly.
+    if (isAssignee) {
+      note.visibleToAssignee = false;
+      wasHidden = true;
+    }
+
+    // If the user is NEITHER the author nor the assignee, they can't delete it.
+    // (This now applies to admins too, as requested)
+    if (!wasHidden) {
+      return res.status(401).json({ message: 'Not authorized to delete this note' });
+    }
+
+    // CASE 3: Cleanup (Hard Delete if both have hidden it)
+    if (note.visibleToAuthor === false && note.visibleToAssignee === false) {
+      await Note.findByIdAndDelete(noteId);
+      return res.status(200).json({ message: 'Shared note fully deleted' });
+    }
+
+    // Otherwise, just save the new visibility state
+    await note.save();
+    res.status(200).json({ message: 'Note removed from your list' });
+
   } catch (error) {
     res.status(500).json({ message: 'Server error deleting note', error: error.message });
   }
@@ -167,7 +192,7 @@ export const getNoteById = async (req, res) => {
 export const getAssignedNotes = async (req, res) => {
   // This logic is correct, it's specific to the logged-in user.
   try {
-    const notes = await Note.find({ assignee: req.user.id }).populate('author', 'username _id');
+    const notes = await Note.find({ assignee: req.user.id, visibleToAssignee: true }).populate('author', 'username _id');
     res.status(200).json(notes);
   } catch (error) {
     res.status(500).json({ message: 'Server error fetching assigned notes' });
@@ -181,9 +206,10 @@ export const getSentNotes = async (req, res) => {
     // We '$ne' (not equal) null to find ones that HAVE an assignee.
     const notes = await Note.find({
       author: req.user.id,
-      assignee: { $ne: null } 
+      assignee: { $ne: null },
+      visibleToAuthor: true
     })
-    .populate('assignee', 'username _id'); // Populate so we can show "To: [Name]"
+      .populate('assignee', 'username _id'); // Populate so we can show "To: [Name]"
 
     res.status(200).json(notes);
   } catch (error) {
