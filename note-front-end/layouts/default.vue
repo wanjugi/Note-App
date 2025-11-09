@@ -138,7 +138,7 @@ const isDark = computed({
 // --- 3. THIS FUNCTION IS UPDATED ---
 async function handleDeleteFolder(folderId: string, folderName: string) {
   // 1. Show confirmation
-  if (confirm(`Are you sure you want to delete the folder "${folderName}"? \n\nAll notes inside it will be moved to your Inbox.`)) {
+  if (confirm(`Are you sure you want to delete the folder "${folderName}"? \n\nAll notes inside it will be moved to your Personal.`)) {
 
     // 2. Call the store action and WAIT for it to finish
     await folderStore.deleteFolder(folderId)

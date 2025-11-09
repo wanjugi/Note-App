@@ -1,7 +1,7 @@
 <template>
     <div>
         <div class="flex justify-between items-center mb-6">
-            <h1 class="text-3xl font-bold">Assigned to Me</h1>
+            <h1 class="text-3xl font-bold">Inbox</h1>
         </div>
 
         <div v-if="assignedNotes.length > 0" class="space-y-4">
