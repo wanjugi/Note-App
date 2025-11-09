@@ -33,6 +33,7 @@ const toast = useToast() //
 // Schema 
 const schema = z.object({
     username: z.string().min(3, 'Username must be at least 3 characters'),
+    email: z.string().email('Invalid email address'),
     password: z.string().min(8, 'Must be at least 8 characters'),
     confirmPassword: z.string().min(8, 'Must be at least 8 characters')
 }).refine(data => data.password === data.confirmPassword, {
@@ -44,6 +45,7 @@ type Schema = z.output<typeof schema>
 
 const fields = [
     { name: 'username', type: 'text' as const, label: 'Username', placeholder: 'Enter your username' },
+    { name: 'email', type: 'text' as const, label: 'Email', placeholder: 'Enter your email' },
     { name: 'password', type: 'password' as const, label: 'Password', placeholder: 'Enter your password' },
     { name: 'confirmPassword', type: 'password' as const, label: 'Confirm Password', placeholder: 'Confirm your password' }
 ]
@@ -56,6 +58,7 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
         // Call the store action
         await authStore.signup({
             username: event.data.username,
+            email: event.data.email,
             password: event.data.password
         })
 

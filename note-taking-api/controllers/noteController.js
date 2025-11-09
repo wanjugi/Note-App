@@ -1,6 +1,7 @@
 import Note from '../models/Note.js';
+import User from '../models/User.js';
+import { sendNoteNotification } from '../utils/emailService.js';
 
-// --- Create a New Note (No change needed) ---
 export const createNote = async (req, res) => {
   try {
     const { title, content, folderId, assigneeId } = req.body;
@@ -12,6 +13,21 @@ export const createNote = async (req, res) => {
       assignee: assigneeId || null
     });
     const savedNote = await newNote.save();
+    // If this note is assigned to someone (and it's NOT assigned to yourself)
+    // 2. The sender is an 'admin'
+    if (assigneeId && assigneeId !== req.user.id && req.user.role === 'admin') {
+      // We don't 'await' this. We let it run in the background
+      // so the user doesn't have to wait for the email to send.
+      User.findById(assigneeId).then(assignee => {
+        if (assignee && assignee.email) {
+          sendNoteNotification(
+            assignee.email,    // Send to this email
+            req.user.username, // From the current logged-in user
+            savedNote.title    // with this note title
+          );
+        }
+      });
+    }
     res.status(201).json(savedNote);
   } catch (error) {
     res.status(500).json({ message: 'Server error creating note', error: error.message });
@@ -155,5 +171,22 @@ export const getAssignedNotes = async (req, res) => {
     res.status(200).json(notes);
   } catch (error) {
     res.status(500).json({ message: 'Server error fetching assigned notes' });
+  }
+};
+
+// --- Get All Notes I Have SENT (NEW) ---
+export const getSentNotes = async (req, res) => {
+  try {
+    // Find notes where I am the AUTHOR, but there IS an assignee.
+    // We '$ne' (not equal) null to find ones that HAVE an assignee.
+    const notes = await Note.find({
+      author: req.user.id,
+      assignee: { $ne: null } 
+    })
+    .populate('assignee', 'username _id'); // Populate so we can show "To: [Name]"
+
+    res.status(200).json(notes);
+  } catch (error) {
+    res.status(500).json({ message: 'Server error fetching sent notes' });
   }
 };

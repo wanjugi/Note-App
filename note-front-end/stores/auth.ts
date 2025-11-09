@@ -56,7 +56,7 @@ export const useAuthStore = defineStore('auth', () => {
   /**
    * Signup Action.
    */
-  async function signup(credentials: { username: string, password: string }) {
+  async function signup(credentials: { username: string, email: string, password: string }) {
     try {
       await $fetch(
         `${apiBaseUrl}/auth/signup`,

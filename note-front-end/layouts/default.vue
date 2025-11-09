@@ -41,6 +41,14 @@
               <span v-if="isSidebarOpen">Inbox</span>
             </button>
 
+            <ULink to="/sent"
+              active-class="bg-gray-100 dark:bg-gray-800 text-neutral-900 dark:text-neutral-100 font-semibold"
+              inactive-class="hover:bg-gray-50 dark:hover:bg-gray-900"
+              class="flex items-center p-3 text-base rounded-md" :class="!isSidebarOpen && 'justify-center'">
+              <UIcon name="i-heroicons-paper-airplane" class="w-5 h-5" :class="isSidebarOpen && 'mr-2'" />
+              <span v-if="isSidebarOpen">Sent</span>
+            </ULink>
+
             <div v-for="folder in folderStore.allFolders" :key="folder._id"
               class="group flex items-center justify-between p-3 text-base rounded-md"
               :class="!isSidebarOpen && 'justify-center'">

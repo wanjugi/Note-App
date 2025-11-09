@@ -22,7 +22,7 @@ export interface Note {
   content: string
   author: string | User   
   folder: string | null 
-  assignee: string | null
+  assignee: string | User | null
   createdAt: string
   updatedAt: string
 }

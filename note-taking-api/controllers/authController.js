@@ -5,7 +5,7 @@ import jwt from 'jsonwebtoken';
 // SIGN UP LOGIC
 export const signup = async (req, res) => {
   try {
-    const { username, password } = req.body;
+    const { username, email, password } = req.body;
     const existingUser = await User.findOne({ username });
 
     if (existingUser) {
@@ -18,6 +18,7 @@ export const signup = async (req, res) => {
     const newUser = new User({
       username,
       password: hashedPassword,
+      email,
     });
 
     const savedUser = await newUser.save();

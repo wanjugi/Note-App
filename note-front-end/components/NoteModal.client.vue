@@ -42,11 +42,10 @@
 </template>
 
 <script setup lang="ts">
-// 1. We NO LONGER need 'computed'
 import { ref, reactive } from 'vue'
 import { useNotesStore } from '~/stores/notes'
 import { useAuthStore } from '~/stores/auth'
-// Make sure this import path is correct for you
+import { useRouter } from 'vue-router'
 import { useUserStore } from '~/stores/user'
 
 const open = ref(false)
@@ -54,6 +53,7 @@ const notesStore = useNotesStore()
 const authStore = useAuthStore()
 const userStore = useUserStore()
 const toast = useToast()
+const router = useRouter()
 
 const state = reactive({
     title: '',
@@ -110,6 +110,7 @@ async function handleClick() {
 
 // 4. YOUR ONSUBMIT IS UPDATED
 async function onSubmit() {
+    const wasAssigned = !!state.assigneeId
     await notesStore.addNote({
         title: state.title,
         content: state.content || '',
@@ -124,5 +125,9 @@ async function onSubmit() {
     state.title = ''
     state.content = ''
     state.assigneeId = null
+
+    if (wasAssigned) {
+    router.push('/sent')
+  }
 }
 </script>

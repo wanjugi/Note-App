@@ -151,6 +151,20 @@ export const useNotesStore = defineStore('notes', () => {
     }
   }
 
+  async function fetchSentNotes() {
+    if (!authStore.token) return
+    try {
+      const response = await $fetch<Note[]>(`${apiBaseUrl}/notes/sent`, {
+        method: 'GET',
+        headers: getHeaders()
+      })
+      notes.value = response
+    } catch (error) {
+      console.error('Failed to fetch sent notes:', error)
+      notes.value = []
+    }
+  }
+
   // 4. RETURN
   return {
     notes,
@@ -165,5 +179,6 @@ export const useNotesStore = defineStore('notes', () => {
     selectedNote,
     currentSelectedNote,
     fetchNoteById,
+    fetchSentNotes
   }
 })
