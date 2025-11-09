@@ -16,14 +16,7 @@ const app = express();
 // --- Middleware ---
 
 // 1. Allow your Nuxt frontend to make requests
-app.use(cors({
-  origin: [
-    'http://localhost:3000',               
-    'https://note-app-tau-livid.vercel.app/',
-    
-  ],
-  credentials: true
-})); 
+app.use(cors()); 
 
 // 2. Allow the server to understand JSON data
 app.use(express.json()); 
